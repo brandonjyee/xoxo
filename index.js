@@ -33,8 +33,8 @@ const getInput = player => async () => {
       message: `${turn}'s move (row,col):`
     }
   ]);
-  const [row = 0, col = 0] = ans.coord.split(/[,\s+]/).map(x => +x);
-  console.log("input (row, col): ", row, col);
+  const [row = 0, col = 0] = ans.coord.split(/[,\s]+/).map(x => +x);
+  // console.log("input (row, col): ", row, col);
   game.dispatch(move(turn, [row, col]));
 };
 
@@ -42,12 +42,16 @@ const getInput = player => async () => {
 const game = createStore(gameReducer);
 
 // Debug: Print the state
-game.subscribe(() => console.log(game.getState()));
+// game.subscribe(() => console.log(game.getState()));
 
 game.subscribe(printBoard);
 game.subscribe(getInput("X"));
 game.subscribe(getInput("O"));
 game.subscribe(() => {
+  // console.log('In our main subscribe fn');
+  if (game.getState().error) {
+    console.log('Error:', game.getState().error);
+  }
   if (game.getState().winner) {
     console.log(`Yay! ${game.getState().winner} won!`);
     process.exit(0);

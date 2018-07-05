@@ -1,10 +1,15 @@
-import { Map } from "immutable";
+import { Map } from 'immutable';
 
 const board = Map();
 // Action Types
-const MOVE = "MOVE";
+const MOVE = 'MOVE';
 
-export default function reducer(state = { board, turn: "X" }, action) {
+export default function reducer(state = { board, turn: 'X' }, action) {
+  // Check for errors first
+  const isBad = bad(state, action);
+  if (isBad) return { ...state, error: isBad };
+  // Object.assign({}, state, {error})
+
   // Check for the action type
   switch (action.type) {
     // Update the board state with the player's move
@@ -12,7 +17,7 @@ export default function reducer(state = { board, turn: "X" }, action) {
       return {
         board: boardReducer(state.board, action),
         turn: turnReducer(state.turn, action),
-        winner: winnerReducer(state.board, action)
+        winner: winnerReducer(state.board, action),
       };
     }
     default:
@@ -20,33 +25,57 @@ export default function reducer(state = { board, turn: "X" }, action) {
   }
 }
 
-export function turnReducer(turn = "X", action) {
+export function turnReducer(turn = 'X', action) {
   if (action.type === MOVE) {
-    return turn === "X" ? "O" : "X";
+    return turn === 'X' ? 'O' : 'X';
   }
   return turn;
 }
 
 export function boardReducer(board = Map(), action) {
   if (action.type === MOVE) {
-    return board.setIn(action.position, action.player);
+    return board.setIn(action.position, action.turn);
   }
   return board;
 }
 
 export function winnerReducer(board = Map(), action) {
   if (action.type === MOVE) {
-    return winner(board.setIn(action.position, action.player));
+    return winner(board.setIn(action.position, action.turn));
   }
 }
 
 // Returns a MOVE Action
-export function move(player, position) {
-  return { type: MOVE, position, player };
+export function move(turn, position) {
+  return { type: MOVE, position, turn };
 }
 
-export function bad() {
-  console.log("bad not implemented");
+export function bad(state, action) {
+  // console.log("In bad fn. state:", state, " action:", action);
+  if (action.type !== MOVE) return;   // Start action and INIT action are ok to ignore
+
+  // If action.player isn't state.turn, bad should return a message telling the player it's not their turn.
+  if (action.turn !== state.turn) return "It's not your turn";
+  // If action.coord isn't an array containing two integers between 0 and 2, bad should return a message saying the position is invalid.
+  if (!Array.isArray(action.position)) return 'action.position is not an array';
+  // Check each coordinate to see if it's valid
+  const coord = action.position;
+  if (
+    !coord.length === 2 ||
+    !isWithinBounds(coord[0]) ||
+    !isWithinBounds(coord[1])
+  ) {
+    return `Invalid coordinate: ${coord}`;
+  }
+  // If the board already has action.coord, bad should return a message saying that square is already taken.
+  if (state.board.hasIn(coord)) return `${coord} already has a value in it`;
+
+  // Action is valid, return null
+  return null;
+}
+
+function isWithinBounds(num) {
+  return num >= 0 && num <= 2;
 }
 
 export function winner(board) {
@@ -71,7 +100,7 @@ export function winner(board) {
       if (!hasValue) return null;
     }
   }
-  return "draw";
+  return 'draw';
 }
 
 export function streak(board, firstCoord, ...remainingCoords) {

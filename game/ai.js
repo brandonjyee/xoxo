@@ -5,10 +5,18 @@ import reducer, {move, bad} from '.'
  *
  * Return an array of actions which are valid moves from the given state.
  */
-export const moves = game => {
+export const moves = gameState => {
   // Go through the game board and see which spaces can be moved into
-  // return [{ type: "MOVE", position: [], player: 'X'}] // TODO
-  return [];
+  const validMoves = [];
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      let potentialMove = move(gameState.turn, [i, j]);
+      if (!bad(gameState, potentialMove)) {
+        validMoves.push(potentialMove);
+      }
+    }
+  }
+  return validMoves;
 }
 
 /**
